@@ -1,0 +1,24 @@
+body{
+   font-family: Arial, sans-serif;
+   margin: 20px; 
+}
+input, button{
+    font-size: 16px;
+    padding: 6px;
+    margin: 6px 0;
+}
+
+table{
+    border-collapse: collapse;
+    margin-top: 12px;
+    width: 100%;
+}
+
+th, td{
+    border: 1px solid #666;
+    text-align: center;
+    padding: 5px;
+}
+th{
+    background-color: aquamarine;
+}

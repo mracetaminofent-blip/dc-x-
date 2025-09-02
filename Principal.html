@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Generador de Tablas de Verdad</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h2>Generador de Tablas de Verdad</h2>
+<p>Ingrese una expresión lógica con variables (letras) y operadores (solo usa mayusculas):</p>
+<ul>
+  <li>AND: <code>AND</code>, <code>&&</code>, <code>&</code>, <code>⋀</code></li>
+  <li>OR: <code>OR</code>, <code>||</code>, <code>|</code>, <code>⋁</code></li>
+  <li>NOT: <code>NOT</code>, <code>!</code>, <code>¬</code></li>
+  <li>XOR: <code>XOR</code></li>
+  <li>Implicación: <code>-></code> o <code>IMPLIES</code></li>
+  <li>Bicondicional: <code><-></code> o <code>IFF</code></li>
+</ul>
+
+<input type="text" id="expr" size="60" placeholder="Ejemplo: (A AND B) OR NOT C" />
+<button onclick="generarTabla()">Generar Tabla</button>
+
+<div id="tablaVerdad"></div>
+
+<script>
+// Funciones para evaluar expresiones lógicas
+function evaluarExpr(expr, valores) {
+  let e = expr.toUpperCase();
+  for (const v in valores) {
+    e = e.replaceAll(new RegExp("\\b" + v + "\\b", "g"), valores[v] ? 'true' : 'false');
+  }
+  e = e.replace(/\bAND\b|&&|&|⋀/g, '&&');
+  e = e.replace(/\bOR\b|\|\||\||⋁/g, '||');
+  e = e.replace(/\bNOT\b|!|¬/g, '!');
+  e = e.replace(/\bXOR\b/g, '!=');
+  e = e.replace(/\bIMPLIES\b|->/g, '<='); 
+  e = e.replace(/\bIFF\b|<->/g, '===');
+
+  try {
+    if (e.includes('<='))
+      e = e.replace(/(true|false) <= (true|false)/g, m => {
+        let [a, b] = m.split(' <= ');
+        return `(!${a.trim()} || ${b.trim()})`;
+      });
+    const func = new Function('return ' + e + ';');
+    return func() ? 1 : 0;
+  } catch (err) {
+    return 'Error';
+  }
+}
+
+function obtenerVariables(expr) {
+  const vars = new Set(expr.toUpperCase().match(/[A-Z]/g));
+  return Array.from(vars).sort();
+}
+
+function generarTabla() {
+  const expr = document.getElementById('expr').value.trim();
+  if (!expr) {
+    alert('Ingrese una expresión lógica.');
+    return;
+  }
+
+  const vars = obtenerVariables(expr);
+  if (vars.length === 0) {
+    alert('No se detectaron variables en la expresión.');
+    return;
+  }
+
+  const tableDiv = document.getElementById('tablaVerdad');
+  tableDiv.innerHTML = '';
+
+  const rows = Math.pow(2, vars.length);
+
+  const table = document.createElement('table');
+  const thead = document.createElement('thead');
+  const trHead = document.createElement('tr');
+  vars.forEach(v => {
+    const th = document.createElement('th');
+    th.textContent = v;
+    trHead.appendChild(th);
+  });
+  const thResult = document.createElement('th');
+  thResult.textContent = 'Resultado';
+  trHead.appendChild(thResult);
+  thead.appendChild(trHead);
+  table.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
+
+  for (let i = 0; i < rows; i++) {
+    const valores = {};
+    for (let j = 0; j < vars.length; j++) {
+      valores[vars[j]] = (i & (1 << (vars.length - j - 1))) !== 0;
+    }
+
+    const resultado = evaluarExpr(expr, valores);
+
+    const tr = document.createElement('tr');
+    vars.forEach(v => {
+      const td = document.createElement('td');
+      td.textContent = valores[v] ? '1' : '0';
+      tr.appendChild(td);
+    });
+    const tdRes = document.createElement('td');
+    tdRes.textContent = resultado === 'Error' ? 'Error' : resultado;
+    tr.appendChild(tdRes);
+    tbody.appendChild(tr);
+  }
+
+  table.appendChild(tbody);
+  tableDiv.appendChild(table);
+}
+</script>
+<script src="main.js"></script>
+</body>
+</html>
